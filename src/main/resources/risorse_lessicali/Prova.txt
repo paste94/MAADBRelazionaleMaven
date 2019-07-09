@@ -1,0 +1,5 @@
+[utils.LexicalResource [word=perfection, emosnFreq=0, nrcFreq=1, sentisenseFreq=0, sentimentIdFk=2], 
+ utils.LexicalResource [word=perfection, emosnFreq=1, nrcFreq=1, sentisenseFreq=0, sentimentIdFk=5], 
+ utils.LexicalResource [word=perfection, emosnFreq=0, nrcFreq=1, sentisenseFreq=0, sentimentIdFk=7], 
+ utils.LexicalResource [word=perfection, emosnFreq=0, nrcFreq=1, sentisenseFreq=0, sentimentIdFk=8]]
+
