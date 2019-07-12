@@ -31,7 +31,7 @@ public class Tweet {
 	public void setSentimentIdFk(Integer sentimentIdFk) {
 		this.sentimentIdFk = sentimentIdFk;
 	}
-	
+
 	@Override
 	public String toString() {
 		return "utils.Tweet [id=" + id + ", word=" + word + ", frequency=" + frequency + ", sentimentIdFk=" + sentimentIdFk

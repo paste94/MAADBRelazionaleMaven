@@ -2,13 +2,14 @@ package utils;
 
 public class LexicalResource {
 	
-	//private Integer id;
+	private Integer id;
 	private String word;
 	private Integer emosnFreq;
 	private Integer nrcFreq;
 	private Integer sentisenseFreq;
 
 	public LexicalResource(String word, Integer sentimentIdFk, String resType) {
+		
 		this.word = word;
 		this.sentimentIdFk = sentimentIdFk;
 		switch (resType) {
@@ -46,14 +47,14 @@ public class LexicalResource {
 
 	private Integer sentimentIdFk;
 
-	/*
+
 	public Integer getId() {
 		return id;
 	}
 	public void setId(Integer id) {
 		this.id = id;
 	}
-	 */
+
 	public String getWord() {
 		return word;
 	}
