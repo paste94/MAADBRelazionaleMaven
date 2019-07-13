@@ -3,14 +3,14 @@ package utils;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import edu.stanford.nlp.simple.Sentence;
+import org.apache.commons.collections4.IterableGet;
 import org.apache.commons.collections4.map.LinkedMap;
 import org.apache.commons.collections4.map.MultiKeyMap;
 
-import javax.json.Json;
-import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
@@ -18,34 +18,33 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class CompleteTweet {
-    private final String POSEMOTICONS_REGEX = "<3|B-\\)|:\\)|:-\\)|:'\\)|:'-\\)|:D|:-D|:\\'-\\)|:\\'-\\)|:o\\)|:\\]|:3|:c\\)|:>|=\\]|8\\)|=\\)|:\\}|:\\^\\)|8-D|8D|x-D|xD|X-D|XD|=-D|=D|=-3|=3|B\\^D|:\\*|:\\^\\*|\\( \\'\\}\\{\\' \\)|\\^\\^|\\(\\^_\\^\\)|\\^-\\^|\\^.\\^|\\^3\\^|\\^L\\^|d:";
-    private final String NEGEMOTICONS_REGEX = ":\\(|:-\\(|:'\\(|:'-\\(|>:\\[|:-c|:c|:-<|:<|:-\\[|:\\[|:\\{|:\\'-\\(|_\\(|:\\'\\[|='\\(|' \\[|='\\[|:'-<|:' <|:'<|='<|=' <|T_T|T.T|\\(T_T\\)|y_y|y.y|\\(Y_Y\\)|;-;|;_;|;.;|:_:|o .__. o|.-.|>_<|>.<";
-
 
     private String tweet;
     private String lemma;
     private List<String> words;
     private int sentimentId;
     private MultiKeyMap<Serializable, Integer> hashTags; //https://www.techiedelight.com/implement-map-with-multiple-keys-multikeymap-java/
-    private MultiKeyMap<Serializable, Integer> emojis;
-    private MultiKeyMap<Serializable, Integer> emoticons;
+    //private MultiKeyMap<Serializable, Integer> emojis;
+    //private MultiKeyMap<Serializable, Integer> emoticons;
 
     public CompleteTweet(String tweet, int sentimentId) {
         this.tweet = tweet;
         this.lemma = tweet;
-        lemmatize();
+        slang();
         this.words = new ArrayList<>(Arrays.asList(tweet.split(" ")));
         this.sentimentId = sentimentId;
         this.hashTags = calculateHashTags();
         try {
-            this.emojis = calculateEmojis();
-            this.emoticons = calculateEmoticons();
+            removeEmojis();
+            removeEmoticons();
+            //this.emojis = calculateEmojis();
+            //this.emoticons = calculateEmoticons();
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
     }
 
-    private void lemmatize() {
+    private void slang() {
         //tratta slang words
         String jsonString = "";
         try {
@@ -61,44 +60,8 @@ public class CompleteTweet {
         });
     }
 
-    public String getTweet() {
-        return tweet;
-    }
-
-    public List<String> getWords() {
-        return words;
-    }
-
-    public void setTweet(String tweet) {
-        this.tweet = tweet;
-    }
-
     public int getSentimentId() {
         return sentimentId;
-    }
-
-    public void setSentimentId(int sentimentId) {
-        this.sentimentId = sentimentId;
-    }
-
-    public String getLemma() {
-        return lemma;
-    }
-
-    public MultiKeyMap<Serializable, Integer> getHashTags() {
-        return this.hashTags;
-    }
-
-    public MultiKeyMap<Serializable, Integer> getEmojis() {
-        return emojis;
-    }
-
-    public MultiKeyMap<Serializable, Integer> getEmoticons() {
-        return emoticons;
-    }
-
-    private void slang(){
-
     }
 
     @Override
@@ -130,6 +93,27 @@ public class CompleteTweet {
         return multiKeyMap;
     }
 
+    private void removeEmojis() throws UnsupportedEncodingException {
+        byte[] utf8Bytes = this.tweet.getBytes(StandardCharsets.UTF_8);
+        String utf8tweet = new String(utf8Bytes, StandardCharsets.UTF_8);
+
+        Pattern unicodeOutliers = Pattern.compile(
+                "[\ud83c\udc00-\ud83c\udfff]|[\ud83d\udc00-\ud83d\udfff]|[\u2600-\u27ff]",
+                Pattern.UNICODE_CASE | Pattern.CANON_EQ | Pattern.CASE_INSENSITIVE);
+
+        Matcher unicodeOutlierMatcher = unicodeOutliers.matcher(utf8tweet);
+        while (unicodeOutlierMatcher.find()) {
+            this.lemma = this.lemma.replaceAll(unicodeOutlierMatcher.group(), "");
+        }
+    }
+
+    private void removeEmoticons(){
+        String POSEMOTICONS_REGEX = ":\\\\|dx|:d|xd|o.o|:p|<3|B-\\)|:\\)|:-\\)|:'\\)|:'-\\)|:D|:-D|:\\'-\\)|:\\'-\\)|:o\\)|:\\]|:3|:c\\)|:>|=\\]|8\\)|=\\)|:\\}|:\\^\\)|8-D|8D|x-D|xD|X-D|XD|=-D|=D|=-3|=3|B\\^D|:\\*|:\\^\\*|\\( \\'\\}\\{\\' \\)|\\^\\^|\\(\\^_\\^\\)|\\^-\\^|\\^.\\^|\\^3\\^|\\^L\\^|d:";
+        String NEGEMOTICONS_REGEX = ":\\(|:-\\(|:'\\(|:'-\\(|>:\\[|:-c|:c|:-<|:<|:-\\[|:\\[|:\\{|:\\'-\\(|_\\(|:\\'\\[|='\\(|' \\[|='\\[|:'-<|:' <|:'<|='<|=' <|T_T|T.T|\\(T_T\\)|y_y|y.y|\\(Y_Y\\)|;-;|;_;|;.;|:_:|o .__. o|.-.|>_<|>.<";
+        this.lemma = this.lemma.replaceAll(POSEMOTICONS_REGEX, "");
+        this.lemma = this.lemma.replaceAll(NEGEMOTICONS_REGEX, "");
+    }
+    /*
     private MultiKeyMap<Serializable, Integer> calculateEmojis() throws UnsupportedEncodingException {
         MultiKeyMap<Serializable, Integer> multiKeyMap = MultiKeyMap.multiKeyMap(new LinkedMap<>());
 
@@ -159,9 +143,12 @@ public class CompleteTweet {
 
     }
 
+     */
+    /*
     private MultiKeyMap<Serializable, Integer> calculateEmoticons(){
         MultiKeyMap<Serializable, Integer> multiKeyMap = MultiKeyMap.multiKeyMap(new LinkedMap<>());
 
+        String POSEMOTICONS_REGEX = ":\\\\|dx|:d|xd|o.o|:p|<3|B-\\)|:\\)|:-\\)|:'\\)|:'-\\)|:D|:-D|:\\'-\\)|:\\'-\\)|:o\\)|:\\]|:3|:c\\)|:>|=\\]|8\\)|=\\)|:\\}|:\\^\\)|8-D|8D|x-D|xD|X-D|XD|=-D|=D|=-3|=3|B\\^D|:\\*|:\\^\\*|\\( \\'\\}\\{\\' \\)|\\^\\^|\\(\\^_\\^\\)|\\^-\\^|\\^.\\^|\\^3\\^|\\^L\\^|d:";
         Pattern emoticonsPattern = Pattern.compile(POSEMOTICONS_REGEX);
         Matcher mat = emoticonsPattern.matcher(this.tweet);
         while (mat.find()) {
@@ -174,6 +161,7 @@ public class CompleteTweet {
             }
         }
 
+        String NEGEMOTICONS_REGEX = ":\\(|:-\\(|:'\\(|:'-\\(|>:\\[|:-c|:c|:-<|:<|:-\\[|:\\[|:\\{|:\\'-\\(|_\\(|:\\'\\[|='\\(|' \\[|='\\[|:'-<|:' <|:'<|='<|=' <|T_T|T.T|\\(T_T\\)|y_y|y.y|\\(Y_Y\\)|;-;|;_;|;.;|:_:|o .__. o|.-.|>_<|>.<";
         emoticonsPattern = Pattern.compile(NEGEMOTICONS_REGEX);
         mat = emoticonsPattern.matcher(this.tweet);
         while (mat.find()) {
@@ -190,6 +178,8 @@ public class CompleteTweet {
         return multiKeyMap;
     }
 
+
+     */
     public List<String> getLemmaList(){
         Sentence sentence;
         lemma = lemma.toLowerCase();
@@ -203,5 +193,7 @@ public class CompleteTweet {
     }
 
 
-
+    public MultiKeyMap<Serializable, Integer> getHashTags() {
+        return this.hashTags;
+    }
 }

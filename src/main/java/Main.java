@@ -2,32 +2,54 @@ import org.apache.commons.collections4.MapIterator;
 import org.apache.commons.collections4.keyvalue.MultiKey;
 import org.apache.commons.collections4.map.LinkedMap;
 import org.apache.commons.collections4.map.MultiKeyMap;
-import utils.*;
+import utils.CompleteTweet;
+import utils.LexicalResource;
+import utils.SentimentEnum;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.*;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class Main {
-    static ConnectToMAADB connectToMAADB = new ConnectToMAADB();
-    static MultiKeyMap hashTags = MultiKeyMap.multiKeyMap(new LinkedMap<>());
-    static Map<Integer, Set<String>> wordClouds; // Mappa [emozione]-->listaParole
-    static List<CompleteTweet> tweets = new ArrayList<>();
-    private static final ArrayList<String> STOP_WORDS_ARRAY = new ArrayList<>(Arrays.asList("go","0","1","2","3","4","5","6","7","8","9","get","know","will","one","username","url","o","I", "\\", "/", "!!", "?!", "??", "!?", "`", "``", "''", "-lrb-", "-rrb-", "-lsb-", "-rsb-", ",", ".", ":", ";", "\"", "'", "?", "<", ">", "{", "}", "[", "]", "+", "-", "(", ")", "&", "%", "$", "@", "!", "^", "#", "*", "..", "...", "'ll", "'s", "'m", "a", "about", "above", "after", "again", "against", "all", "am", "an", "and", "any", "are", "aren't", "as", "at", "be", "because", "been", "before", "being", "below", "between", "both", "but", "by", "can", "can't", "cannot", "could", "couldn't", "did", "didn't", "do", "does", "doesn't", "doing", "don't", "down", "during", "each", "few", "for", "from", "further", "had", "hadn't", "has", "hasn't", "have", "haven't", "having", "he", "he'd", "he'll", "he's", "her", "here", "here's", "hers", "herself", "him", "himself", "his", "how", "how's", "i", "i'd", "i'll", "i'm", "i've", "if", "in", "into", "is", "isn't", "it", "it's", "its", "itself", "let's", "me", "more", "most", "mustn't", "my", "myself", "no", "nor", "not", "of", "off", "on", "once", "only", "or", "other", "ought", "our", "ours", "ourselves", "out", "over", "own", "same", "shan't", "she", "she'd", "she'll", "she's", "should", "shouldn't", "so", "some", "such", "than", "that", "that's", "the", "their", "theirs", "them", "themselves", "then", "there", "there's", "these", "they", "they'd", "they'll", "they're", "they've", "this", "those", "through", "to", "too", "under", "until", "up", "very", "was", "wasn't", "we", "we'd", "we'll", "we're", "we've", "were", "weren't", "what", "what's", "when", "when's", "where", "where's", "which", "while", "who", "who's", "whom", "why", "why's", "with", "won't", "would", "wouldn't", "you", "you'd", "you'll", "you're", "you've", "your", "yours", "yourself", "yourselves", "###", "return", "arent", "cant", "couldnt", "didnt", "doesnt", "dont", "hadnt", "hasnt", "havent", "hes", "heres", "hows", "im", "isnt", "its", "lets", "mustnt", "shant", "shes", "shouldnt", "thats", "theres", "theyll", "theyre", "theyve", "wasnt", "were", "werent", "whats", "whens", "wheres", "whos", "whys", "wont", "wouldnt", "youd", "youll", "youre", "youve"));
+    private static ConnectToDB connectToMAADB;
+    private static MultiKeyMap hashTags = MultiKeyMap.multiKeyMap(new LinkedMap<>());
+    //static Map<Integer, Set<String>> wordClouds; // Mappa [emozione]-->listaParole
+    private static List<CompleteTweet> tweets = new ArrayList<>();
+    private static final ArrayList<String> STOP_WORDS_ARRAY = new ArrayList<>(Arrays.asList("<<",">>","=","_","go","0","1","2","3","4","5","6","7","8","9","just","like","now","get","know","will","one","username","url","o","I", "\\", "/", "!!", "?!", "??", "!?", "`", "``", "''", "-lrb-", "-rrb-", "-lsb-", "-rsb-", ",", ".", ":", ";", "\"", "'", "?", "<", ">", "{", "}", "[", "]", "+", "-", "(", ")", "&", "%", "$", "@", "!", "^", "#", "*", "..", "...", "'ll", "'s", "'m", "a", "about", "above", "after", "again", "against", "all", "am", "an", "and", "any", "are", "aren't", "as", "at", "be", "because", "been", "before", "being", "below", "between", "both", "but", "by", "can", "can't", "cannot", "could", "couldn't", "did", "didn't", "do", "does", "doesn't", "doing", "don't", "down", "during", "each", "few", "for", "from", "further", "had", "hadn't", "has", "hasn't", "have", "haven't", "having", "he", "he'd", "he'll", "he's", "her", "here", "here's", "hers", "herself", "him", "himself", "his", "how", "how's", "i", "i'd", "i'll", "i'm", "i've", "if", "in", "into", "is", "isn't", "it", "it's", "its", "itself", "let's", "me", "more", "most", "mustn't", "my", "myself", "no", "nor", "not", "of", "off", "on", "once", "only", "or", "other", "ought", "our", "ours", "ourselves", "out", "over", "own", "same", "shan't", "she", "she'd", "she'll", "she's", "should", "shouldn't", "so", "some", "such", "than", "that", "that's", "the", "their", "theirs", "them", "themselves", "then", "there", "there's", "these", "they", "they'd", "they'll", "they're", "they've", "this", "those", "through", "to", "too", "under", "until", "up", "very", "was", "wasn't", "we", "we'd", "we'll", "we're", "we've", "were", "weren't", "what", "what's", "when", "when's", "where", "where's", "which", "while", "who", "who's", "whom", "why", "why's", "with", "won't", "would", "wouldn't", "you", "you'd", "you'll", "you're", "you've", "your", "yours", "yourself", "yourselves", "###", "return", "arent", "cant", "couldnt", "didnt", "doesnt", "dont", "hadnt", "hasnt", "havent", "hes", "heres", "hows", "im", "isnt", "its", "lets", "mustnt", "shant", "shes", "shouldnt", "thats", "theres", "theyll", "theyre", "theyve", "wasnt", "were", "werent", "whats", "whens", "wheres", "whos", "whys", "wont", "wouldnt", "youd", "youll", "youre", "youve"));
+    private static int threshold = 1000;
 
 
     public static void main(String[] args) {
+        chooseDB();
         printMenu();
     }
 
-    public static void printMenu(){
+    private static void chooseDB(){
+        Scanner in = new Scanner(System.in);
+        System.out.println("Selezionare il tipo di database: ");
+        System.out.println("1. Relazionale Postgres");
+        System.out.println("2. MongoDB");
+
+        System.out.print("Scelta: ");
+        String menuItem = in.next();
+        switch (menuItem){
+            case "1":
+                connectToMAADB = new ConnectToRelational();
+                break;
+            case "2":
+                connectToMAADB = new ConnectToMongo();
+        }
+
+
+    }
+
+    private static void printMenu(){
         Scanner in = new Scanner(System.in);
 
         // print menu
@@ -36,7 +58,9 @@ public class Main {
         System.out.println("3. Ottieni word clouds SENZA considerare lexicalresource");
         System.out.println("4. Ottieni word clouds con lexicalresource");
         System.out.println("5. Aggiungi nuove risorse");
-        System.out.println("9. Test");
+        System.out.println("6. Ottieni hashtag clouds SENZA considerare lexicalresource");
+        System.out.println("7. Ottieni hashtag clouds con lexicalresource");
+        System.out.println("8. Aggiungi nuove risorse basate sugli hashtag");
         System.out.println("0. Termina");
 
         // handle user commands
@@ -48,19 +72,36 @@ public class Main {
             menuItem = in.next();
             switch (menuItem) {
                 case "1":
+                    //Inizializza tabella lexicalresource
                     lexicalResources(); //12888
                     break;
                 case "2":
+                    //Inizializza tabella tweet
                     processTweets();
                     break;
                 case "3":
-                    calculateWordClouds();
+                    //Ottieni word clouds SENZA considerare lexicalresource
+                    calculateWordClouds(false);
                     break;
                 case "4":
-                    calculateWordCloudsWithLexRes();
+                    //Ottieni word clouds con lexicalresource
+                    calculateWordCloudsWithLexRes(false);
                     break;
                 case "5":
-                    addNewWords();
+                    //Aggiungi nuove risorse
+                    addNewWords(false);
+                    break;
+                case "6":
+                    //Ottieni hashtag clouds SENZA considerare lexicalresource
+                    calculateWordClouds(true);
+                    break;
+                case "7":
+                    //Ottieni hashtag clouds con lexicalresource
+                    calculateWordCloudsWithLexRes(true);
+                    break;
+                case "8":
+                    //Aggiungi nuove risorse basate sugli hashtag
+                    addNewWords(true);
                     break;
                 case "9":
                     test();
@@ -76,7 +117,7 @@ public class Main {
 
     }
 
-    static void lexicalResources(){
+    private static void lexicalResources(){
         WordsFrequenceCalculator wordsFrequenceCalculator = new WordsFrequenceCalculator();
         ArrayList<LexicalResource> words = new ArrayList<>();
 
@@ -84,28 +125,23 @@ public class Main {
         SentimentEnum.getMap().forEach((id, name) -> {
             try (Stream<Path> walk = Files.walk(Paths.get("./src/main/resources/risorse_lessicali/" + name))) {
                 List<String> files = walk.filter(Files::isRegularFile)
-                        .map(x -> x.toString()).collect(Collectors.toList());
-                //System.out.println(wordsFrequenceCalculator.countFrequences(id, files));
+                        .map(Path::toString).collect(Collectors.toList());
                 words.addAll(wordsFrequenceCalculator.countFrequences(id, files));
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
         });
+        System.out.println("1) Lettura da file eseguita");
 
         //Salva nel DB
-        try {
-            connectToMAADB.deleteTable("lexicalResource");
-            connectToMAADB.saveLexicalResource(words);
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
-        }
-
-        System.out.println("Tabella lexicalresources inizializzata correttamente\n---------------------------------------\n\n");
+        connectToMAADB.deleteTable("lexicalResource");
+        connectToMAADB.saveLexicalResource(words);
+        System.out.println("2) Salvataggio nel DB terminato\n");
 
 
     }
 
-    public static void processTweets(){
+    private static void processTweets(){
 
         //Leggi i tweet dai file e genera la lista di oggetti CompleteTweet
         SentimentEnum.getFileMap().forEach((id, fileName) -> {
@@ -121,15 +157,10 @@ public class Main {
         System.out.println("\n1) Lettura tweet eseguita con successo");
 
         //Elimina la vecchia versione della tabella
-        try {
-            connectToMAADB.deleteTable("tweet");
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        connectToMAADB.deleteTable("tweet");
         System.out.println("2) Eliminata vecchia tabella");
 
         //Genera l'insieme degli hashtag
-        /*
         tweets.forEach(t->{
             MapIterator it = t.getHashTags().mapIterator();
 
@@ -146,13 +177,15 @@ public class Main {
                 }
             }
         });
-        System.out.println("2) Estrazione hashtag eseguita con successo");
-         */
+        System.out.println("3) Estrazione hashtag eseguita con successo");
+
+        connectToMAADB.saveHashtags(hashTags);
+        System.out.println("4) Salvataggio hashtag nel DB");
 
         //Per ogni emozione metti nella mappa delle frequenze le parole con le relatve frequenze
-        Integer i;
+        int i;
         for(i = 1; i <= 8; i++){
-            Integer finalI = i;
+            int finalI = i;
             //Seleziona solo le parole che sono del sentimento i
             List<CompleteTweet> tweet = tweets.stream().filter(e->e.getSentimentId() == finalI).collect(Collectors.toList());
 
@@ -169,42 +202,21 @@ public class Main {
             Map<String, Long> frequences = lemmas.stream().collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
 
             //Carica sul DB i dati
-            try {
-                connectToMAADB.saveTweets(frequences, i);
-            } catch (SQLException e) {
-                System.out.println(e.getMessage());
-            }
+            connectToMAADB.saveTweets(frequences, i);
         }
+        System.out.println("5) Salvataggio tweet nel DB\n");
     }
 
-    private static ResultSet calculateWordClouds() {
-        ResultSet resultSet = null;
-        try {
-            resultSet = connectToMAADB.getWordClouds(1000);
-            connectToMAADB.printResultSet(resultSet);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return resultSet;
+    private static void calculateWordClouds(boolean hashtag) {
+        connectToMAADB.printWordClouds(threshold, hashtag);
     }
 
-    private static ResultSet calculateWordCloudsWithLexRes() {
-        ResultSet resultSet = null;
-        try {
-            resultSet = connectToMAADB.getWordCloudsWithLexRes(1000);
-            connectToMAADB.printResultSet(resultSet);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return resultSet;
+    private static void calculateWordCloudsWithLexRes(boolean hashtag) {
+        connectToMAADB.printWordCloudsWithLexRes(threshold, hashtag);
     }
 
-    private static void addNewWords(){
-        ResultSet res = calculateWordClouds();
-        ResultSet resWithLexRes = calculateWordCloudsWithLexRes();
-
-        Map<String, Integer> resMap = new HashMap<>();
-
+    private static void addNewWords(boolean hashtag){
+        connectToMAADB.addLexRes(threshold, hashtag);
     }
 
     private static void test(){

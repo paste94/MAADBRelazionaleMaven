@@ -3,21 +3,16 @@ import utils.LexicalResource;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 
-public class WordsFrequenceCalculator {
-    private String[] resources = {"EmoSN", "NRC", "sentisense"};
+class WordsFrequenceCalculator {
 
-    public List<LexicalResource> countFrequences(int sentimentId, List<String> paths) throws IOException {
+    List<LexicalResource> countFrequences(int sentimentId, List<String> paths) throws IOException {
         HashMap<String, LexicalResource> lexicalResources = new HashMap<>();
-        ArrayList<String> listOfreads = new ArrayList<>();
 
         //Per ogni file
         for(String path : paths){
@@ -56,7 +51,6 @@ public class WordsFrequenceCalculator {
                 });
             }
         }
-        System.out.println(lexicalResources.get("perfection"));
         return new ArrayList<>(lexicalResources.values());
     }
 }
