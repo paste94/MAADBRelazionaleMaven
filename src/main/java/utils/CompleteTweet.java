@@ -16,6 +16,7 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class CompleteTweet {
 
@@ -23,7 +24,8 @@ public class CompleteTweet {
     private String lemma;
     private List<String> words;
     private int sentimentId;
-    private MultiKeyMap<Serializable, Integer> hashTags; //https://www.techiedelight.com/implement-map-with-multiple-keys-multikeymap-java/
+    private List<String> hashTags;
+    //private MultiKeyMap<Serializable, Integer> hashTags; //https://www.techiedelight.com/implement-map-with-multiple-keys-multikeymap-java/
     //private MultiKeyMap<Serializable, Integer> emojis;
     //private MultiKeyMap<Serializable, Integer> emoticons;
 
@@ -31,7 +33,7 @@ public class CompleteTweet {
         this.tweet = tweet;
         this.lemma = tweet;
         slang();
-        this.words = new ArrayList<>(Arrays.asList(tweet.split(" ")));
+        this.words = new ArrayList<>(Arrays.asList(lemma.split(" ")));
         this.sentimentId = sentimentId;
         this.hashTags = calculateHashTags();
         try {
@@ -72,6 +74,20 @@ public class CompleteTweet {
                 '}';
     }
 
+    private List<String> calculateHashTags(){
+        List<String> h = new ArrayList<>();
+
+        words.forEach(w->{
+            if(w.length()>1 && w.startsWith("#")){
+                h.add(w);
+            }
+        });
+
+
+        return h;
+    }
+
+    /*
     private MultiKeyMap<Serializable, Integer> calculateHashTags(){
         //  creates an ordered map
         MultiKeyMap<Serializable, Integer> multiKeyMap = MultiKeyMap.multiKeyMap(new LinkedMap<>());
@@ -92,6 +108,8 @@ public class CompleteTweet {
 
         return multiKeyMap;
     }
+
+     */
 
     private void removeEmojis() throws UnsupportedEncodingException {
         byte[] utf8Bytes = this.tweet.getBytes(StandardCharsets.UTF_8);
@@ -189,11 +207,15 @@ public class CompleteTweet {
             return new ArrayList<>();
         }
 
-        return sentence.lemmas();
+        //Rimuovi gli hashtag
+        List<String> l = sentence.lemmas();
+        l = l.stream().filter(e->!e.startsWith("#")).distinct().collect(Collectors.toList()); //Usiamo distinct perchè la frequenza è il numero di tweet che contengono la parola, non il numero di volte che appare in assoluto
+
+        return l;
     }
 
 
-    public MultiKeyMap<Serializable, Integer> getHashTags() {
+    public List<String> getHashTags() {
         return this.hashTags;
     }
 }

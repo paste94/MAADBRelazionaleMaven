@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public enum SentimentEnum {
+
     ANGER(1,"dataset_dt_anger_60k.txt", "Anger"),
     ANTICIPATION(2,"dataset_dt_anticipation_60k.txt", "Anticipation"),
     DISGUST(3,"dataset_dt_disgust_60k.txt", "Disgust"),
@@ -48,6 +49,4 @@ public enum SentimentEnum {
 		map.put(TRUST.tableId, TRUST.fileName);
 		return map;
 	}
-
-
 }
