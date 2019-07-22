@@ -26,16 +26,20 @@ public class Main {
     //static Map<Integer, Set<String>> wordClouds; // Mappa [emozione]-->listaParole
     private static List<CompleteTweet> tweets = new ArrayList<>();
     private static final String EMOTICONS = "B-\\)|:\\)|:-\\)|:'\\)|:'-\\)|:D|:-D|:\\'-\\)|:\\'-\\)|:o\\)|:\\]|:3|:c\\)|:>|=\\]|8\\)|=\\)|:\\}|:\\^\\)|8-D|8D|x-D|xD|X-D|XD|=-D|=D|=-3|=3|B\\^D|:\\*|:\\^\\*|\\( \\'\\}\\{\\' \\)|\\^\\^|\\(\\^_\\^\\)|\\^-\\^|\\^.\\^|\\^3\\^|\\^L\\^|d:|:\\(|:-\\(|:'\\(|:'-\\(|>:\\[|:-c|:c|:-<|:<|:-\\[|:\\[|:\\{|:\\'-\\(|_\\(|:\\'\\[|='\\(|' \\[|='\\[|:'-<|:' <|:'<|='<|=' <|T_T|T.T|\\(T_T\\)|y_y|y.y|\\(Y_Y\\)|;-;|;_;|;.;|:_:|o .__. o|.-.";
-    private static final List<String> STOP_WORDS_ARRAY = new ArrayList<>(Arrays.asList("<<",">>","=","_","go","0","1","2","3","4","5","6","7","8","9","just","like","now","get","know","will","one","username","url","o","I", "\\", "/", "!!", "?!", "??", "!?", "`", "``", "''", "-lrb-", "-rrb-", "-lsb-", "-rsb-", ",", ".", ":", ";", "\"", "'", "?", "<", ">", "{", "}", "[", "]", "+", "-", "(", ")", "&", "%", "$", "@", "!", "^", "#", "*", "..", "...", "'ll", "'s", "'m", "a", "about", "above", "after", "again", "against", "all", "am", "an", "and", "any", "are", "aren't", "as", "at", "be", "because", "been", "before", "being", "below", "between", "both", "but", "by", "can", "can't", "cannot", "could", "couldn't", "did", "didn't", "do", "does", "doesn't", "doing", "don't", "down", "during", "each", "few", "for", "from", "further", "had", "hadn't", "has", "hasn't", "have", "haven't", "having", "he", "he'd", "he'll", "he's", "her", "here", "here's", "hers", "herself", "him", "himself", "his", "how", "how's", "i", "i'd", "i'll", "i'm", "i've", "if", "in", "into", "is", "isn't", "it", "it's", "its", "itself", "let's", "me", "more", "most", "mustn't", "my", "myself", "no", "nor", "not", "of", "off", "on", "once", "only", "or", "other", "ought", "our", "ours", "ourselves", "out", "over", "own", "same", "shan't", "she", "she'd", "she'll", "she's", "should", "shouldn't", "so", "some", "such", "than", "that", "that's", "the", "their", "theirs", "them", "themselves", "then", "there", "there's", "these", "they", "they'd", "they'll", "they're", "they've", "this", "those", "through", "to", "too", "under", "until", "up", "very", "was", "wasn't", "we", "we'd", "we'll", "we're", "we've", "were", "weren't", "what", "what's", "when", "when's", "where", "where's", "which", "while", "who", "who's", "whom", "why", "why's", "with", "won't", "would", "wouldn't", "you", "you'd", "you'll", "you're", "you've", "your", "yours", "yourself", "yourselves", "###", "return", "arent", "cant", "couldnt", "didnt", "doesnt", "dont", "hadnt", "hasnt", "havent", "hes", "heres", "hows", "im", "isnt", "its", "lets", "mustnt", "shant", "shes", "shouldnt", "thats", "theres", "theyll", "theyre", "theyve", "wasnt", "were", "werent", "whats", "whens", "wheres", "whos", "whys", "wont", "wouldnt", "youd", "youll", "youre", "youve"));
+    private static final List<String> STOP_WORDS_ARRAY = new ArrayList<>(Arrays.asList("<<",">>","=","_","let","go","0","1","2","3","4","5","6","7","8","9","just","like","now","get","know","will","one","username","url","o","I", "\\", "/", "!!", "?!", "??", "!?", "`", "``", "''", "-lrb-", "-rrb-", "-lsb-", "-rsb-", ",", ".", ":", ";", "\"", "'", "?", "<", ">", "{", "}", "[", "]", "+", "-", "(", ")", "&", "%", "$", "@", "!", "^", "#", "*", "..", "...", "'ll", "'s", "'m", "a", "about", "above", "after", "again", "against", "all", "am", "an", "and", "any", "are", "aren't", "as", "at", "be", "because", "been", "before", "being", "below", "between", "both", "but", "by", "can", "can't", "cannot", "could", "couldn't", "did", "didn't", "do", "does", "doesn't", "doing", "don't", "down", "during", "each", "few", "for", "from", "further", "had", "hadn't", "has", "hasn't", "have", "haven't", "having", "he", "he'd", "he'll", "he's", "her", "here", "here's", "hers", "herself", "him", "himself", "his", "how", "how's", "i", "i'd", "i'll", "i'm", "i've", "if", "in", "into", "is", "isn't", "it", "it's", "its", "itself", "let's", "me", "more", "most", "mustn't", "my", "myself", "no", "nor", "not", "of", "off", "on", "once", "only", "or", "other", "ought", "our", "ours", "ourselves", "out", "over", "own", "same", "shan't", "she", "she'd", "she'll", "she's", "should", "shouldn't", "so", "some", "such", "than", "that", "that's", "the", "their", "theirs", "them", "themselves", "then", "there", "there's", "these", "they", "they'd", "they'll", "they're", "they've", "this", "those", "through", "to", "too", "under", "until", "up", "very", "was", "wasn't", "we", "we'd", "we'll", "we're", "we've", "were", "weren't", "what", "what's", "when", "when's", "where", "where's", "which", "while", "who", "who's", "whom", "why", "why's", "with", "won't", "would", "wouldn't", "you", "you'd", "you'll", "you're", "you've", "your", "yours", "yourself", "yourselves", "###", "return", "arent", "cant", "couldnt", "didnt", "doesnt", "dont", "hadnt", "hasnt", "havent", "hes", "heres", "hows", "im", "isnt", "its", "lets", "mustnt", "shant", "shes", "shouldnt", "thats", "theres", "theyll", "theyre", "theyve", "wasnt", "were", "werent", "whats", "whens", "wheres", "whos", "whys", "wont", "wouldnt", "youd", "youll", "youre", "youve"));
     private static int threshold = 1000;
 
 
     public static void main(String[] args) {
-        chooseDB();
-        printMenu();
+        int choosen = chooseDB();
+        if(choosen == 1) {
+            printMenuRelational();
+        }else {
+            printMenuMongo();
+        }
     }
 
-    private static void chooseDB(){
+    private static int chooseDB(){
         Scanner in = new Scanner(System.in);
         System.out.println("Selezionare il tipo di database: ");
         System.out.println("1. Relazionale Postgres");
@@ -52,11 +56,11 @@ public class Main {
             case "2":
                 connectToMAADB = new ConnectToMongo();
         }
-
+        return Integer.parseInt(menuItem);
 
     }
 
-    private static void printMenu(){
+    private static void printMenuRelational(){
         Scanner in = new Scanner(System.in);
 
         // print menu
@@ -115,6 +119,79 @@ public class Main {
 
     }
 
+    private static void printMenuMongo(){
+        Scanner in = new Scanner(System.in);
+
+        // print menu
+        System.out.println("1. Inizializza tabella lexicalresource");
+        System.out.println("2. Calcola le frequenze nei tweet (parole, hashtag, emoji ed emoticon)");
+        System.out.println("3. Calcola Map Reduce");
+        System.out.println("4. Genera word clouds");
+        //System.out.println("6. Genera le emoticon clouds");
+        System.out.println("0. Termina");
+
+        // handle user commands
+        boolean quit = false;
+        String menuItem;
+
+        do {
+            System.out.print("Scelta: ");
+            menuItem = in.next();
+            switch (menuItem) {
+                case "1":
+                    //Inizializza tabella lexicalresource
+                    lexicalResources(); //12888
+                    break;
+                case "2":
+                    //Calcola le frequenze dei tweet
+                    calculateFrequences();
+                    break;
+                //Ottieni word clouds dai tweet
+                case "3":
+                    //Ottieni word clouds dal DB
+                    calculateMapReduce();
+                    break;
+                case "4":
+                    //Ottieni word clouds con lexicalresource
+                    calculateClouds("hashtag");
+                    break;
+                case "5":
+                    //Aggiungi nuove risorse
+                    calculateClouds("emoticon");
+                    break;
+                case "6":
+                    //Ottieni hashtag clouds SENZA considerare lexicalresource
+                    calculateClouds("emoticon");
+                    break;
+                case "9":
+                    test();
+                    break;
+                case "0":
+                    quit = true;
+                    break;
+                default:
+                    System.out.println("Selezione non valida");
+            }
+        } while (!quit);
+        System.out.println("Terminato");
+
+    }
+
+    private static void calculateFrequencesMongo() {
+        String jsonString = "";
+        try {
+            jsonString = new String (Files.readAllBytes(Paths.get("./src/main/resources/slang/slang.txt")));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Map<String, String> slang =new Gson().fromJson( jsonString, new TypeToken<HashMap<String, String>>() {}.getType());
+
+    }
+
+    private static void calculateMapReduce() {
+            connectToMAADB.mapReduce();
+    }
+
     private static void lexicalResources(){
         WordsFrequenceCalculator wordsFrequenceCalculator = new WordsFrequenceCalculator();
         ArrayList<LexicalResource> words = new ArrayList<>();
@@ -156,107 +233,114 @@ public class Main {
     }
 
     private static void calculateFrequences(){
-        String jsonString = "";
-        try {
-            jsonString = new String (Files.readAllBytes(Paths.get("./src/main/resources/slang/slang.txt")));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        Map<String, String> slang =new Gson().fromJson( jsonString, new TypeToken<HashMap<String, String>>() {}.getType());
 
-        //Leggi i tweet dai file e genera la lista di oggetti CompleteTweet
-        for (Map.Entry<Integer, String> entry : SentimentEnum.getFileMap().entrySet()) {
-            Integer id = entry.getKey();
-            String fileName = entry.getValue();
-            List<String> hashtags = new ArrayList<>();
-            List<String> emojis = new ArrayList<>();
-            List<String> emoticons = new ArrayList<>();
+            //connectToMAADB.deleteTable("hashtag");
+            //connectToMAADB.deleteTable("emoticon");
+            //connectToMAADB.deleteTable("emoji");
 
-            System.out.println("Lavoro sul file " + fileName);
+            String jsonString = "";
             try {
-                List<String> allLines = Files.readAllLines(Paths.get("./src/main/resources/tweet/" + fileName), StandardCharsets.UTF_8);
-
-                //rimuovi username, url, hashtags e rimpiazza slang words
-                for (int i = 0; i < allLines.size(); i++) {
-
-                    //Salva hashtags
-                    String[] list = allLines.get(i).split(" ");
-                    for(String s:list){
-                        //Salva hashtag
-                        if(s.length()>0 && s.startsWith("#")){
-                            hashtags.add(s);
-                        }
-
-                        //Salva emoji
-                        byte[] utf8Bytes = s.getBytes("UTF-8");
-                        String utf8tweet = new String(utf8Bytes, "UTF-8");
-                        Pattern unicodeOutliers = Pattern.compile(
-                                "[\ud83c\udc00-\ud83c\udfff]|[\ud83d\udc00-\ud83d\udfff]|[\u2600-\u27ff]",
-                                Pattern.UNICODE_CASE | Pattern.CANON_EQ | Pattern.CASE_INSENSITIVE);
-                        Matcher unicodeOutlierMatcher = unicodeOutliers.matcher(utf8tweet);
-                        while (unicodeOutlierMatcher.find()) {
-                            emojis.add(unicodeOutlierMatcher.group());
-                        }
-
-                        //Salva emoticons
-                        Pattern emoticonsPattern = Pattern.compile(EMOTICONS);
-                        Matcher mat = emoticonsPattern.matcher(s);
-                        while (mat.find()) {
-                            emoticons.add(mat.group());
-                        }
-
-
-                    }
-
-                    //Rimuovi user, url, hashtag
-                    String newString = allLines.get(i).replaceAll("\\bUSERNAME\\b|\\bURL\\b|#\\w+", "");
-
-                    //Rimpazza slang
-                    for (Map.Entry<String, String> e : slang.entrySet()) {
-                        String k = e.getKey();
-                        String v = e.getValue();
-                        Pattern pattern = Pattern.compile("\\b" + k + "\\b");
-                        Matcher matcher = pattern.matcher(newString);
-                        newString = matcher.replaceAll(v);
-                    }
-
-                    //Lemmatizza la frase
-                    newString = newString.toLowerCase();
-                    try{
-                        if(newString.replace(" ", "").length()>0) {
-                            Sentence sentence = new Sentence(newString);
-                            List<String> l = sentence.lemmas();
-                            l = l.stream().distinct().collect(Collectors.toList());
-                            newString = "";
-                            for (String str : l) {
-                                newString = newString + str + " ";
-                            }
-                        }
-                        //System.out.println(newString);
-                    }catch (IllegalStateException e){
-                        System.out.println("-"+newString+"-");
-                        e.printStackTrace();
-                    }
-
-                    //Sostituisci la nuova riga con la vecchia
-                    allLines.set(i, newString);
-                }
-                //Genera l'immagine
-                final FrequencyAnalyzer frequencyAnalyzer = new FrequencyAnalyzer();
-                frequencyAnalyzer.setWordFrequenciesToReturn(500);
-                frequencyAnalyzer.setStopWords(STOP_WORDS_ARRAY); //Rimuove le stop words
-                final List<WordFrequency> wordFrequencies = frequencyAnalyzer.load(allLines); //La load elimina già emoji ed emoticons di default
-                System.out.println("Terminato il calcolo, salvo nel DB");
-                connectToMAADB.addLexRes(wordFrequencies, id);
-                connectToMAADB.addHashtags(hashtags, id);
-                connectToMAADB.addEmoticon(emoticons, id);
-                connectToMAADB.addEmojis(emojis, id);
-                System.out.println("Salvataggio nel DB riuscito");
-                System.out.println();
+                jsonString = new String (Files.readAllBytes(Paths.get("./src/main/resources/slang/slang.txt")));
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        }
+            Map<String, String> slang =new Gson().fromJson( jsonString, new TypeToken<HashMap<String, String>>() {}.getType());
+
+            //Leggi i tweet dai file e genera la lista di oggetti CompleteTweet
+            for (Map.Entry<Integer, String> entry : SentimentEnum.getFileMap().entrySet()) {
+                Integer id = entry.getKey();
+                String fileName = entry.getValue();
+                List<String> hashtags = new ArrayList<>();
+                List<String> emojis = new ArrayList<>();
+                List<String> emoticons = new ArrayList<>();
+
+                System.out.println("Lavoro sul file " + fileName);
+                try {
+                    List<String> allLines = Files.readAllLines(Paths.get("./src/main/resources/tweet/" + fileName), StandardCharsets.UTF_8);
+
+                    //rimuovi username, url, hashtags e rimpiazza slang words
+                    for (int i = 0; i < allLines.size(); i++) {
+
+                        //Salva hashtags
+                        String[] list = allLines.get(i).split(" ");
+                        for(String s:list){
+                            //Salva hashtag
+                            if(s.length()>0 && s.startsWith("#")){
+                                hashtags.add(s);
+                            }
+
+                            //Salva emoji
+                            byte[] utf8Bytes = s.getBytes("UTF-8");
+                            String utf8tweet = new String(utf8Bytes, "UTF-8");
+                            Pattern unicodeOutliers = Pattern.compile(
+                                    "[\ud83c\udc00-\ud83c\udfff]|[\ud83d\udc00-\ud83d\udfff]|[\u2600-\u27ff]",
+                                    Pattern.UNICODE_CASE | Pattern.CANON_EQ | Pattern.CASE_INSENSITIVE);
+                            Matcher unicodeOutlierMatcher = unicodeOutliers.matcher(utf8tweet);
+                            while (unicodeOutlierMatcher.find()) {
+                                emojis.add(unicodeOutlierMatcher.group());
+                            }
+
+                            //Salva emoticons
+                            Pattern emoticonsPattern = Pattern.compile(EMOTICONS);
+                            Matcher mat = emoticonsPattern.matcher(s);
+                            while (mat.find()) {
+                                emoticons.add(mat.group());
+                            }
+
+
+                        }
+
+                        //Rimuovi user, url, hashtag
+                        String newString = allLines.get(i).replaceAll("\\bUSERNAME\\b|\\bURL\\b|#\\w+", "");
+
+                        //Rimpazza slang
+                        for (Map.Entry<String, String> e : slang.entrySet()) {
+                            String k = e.getKey();
+                            String v = e.getValue();
+                            Pattern pattern = Pattern.compile("\\b" + k + "\\b");
+                            Matcher matcher = pattern.matcher(newString);
+                            newString = matcher.replaceAll(v);
+                        }
+
+                        //Lemmatizza la frase
+                        newString = newString.toLowerCase();
+                        try{
+                            if(newString.replace(" ", "").length()>0) {
+                                Sentence sentence = new Sentence(newString);
+                                List<String> l = sentence.lemmas();
+                                l = l.stream().distinct().collect(Collectors.toList());
+                                newString = "";
+                                for (String str : l) {
+                                    newString = newString + str + " ";
+                                }
+                            }
+                            //System.out.println(newString);
+                        }catch (IllegalStateException e){
+                            System.out.println("-"+newString+"-");
+                            e.printStackTrace();
+                        }
+
+                        //Sostituisci la nuova riga con la vecchia
+                        allLines.set(i, newString);
+                    }
+                    //Genera l'immagine
+                    final FrequencyAnalyzer frequencyAnalyzer = new FrequencyAnalyzer();
+                    frequencyAnalyzer.setWordFrequenciesToReturn(500);
+                    frequencyAnalyzer.setStopWords(STOP_WORDS_ARRAY); //Rimuove le stop words
+                    final List<WordFrequency> wordFrequencies = frequencyAnalyzer.load(allLines); //La load elimina già emoji ed emoticons di default
+                    System.out.println("Terminato il calcolo, salvo nel DB");
+                    System.out.println(wordFrequencies);
+                    connectToMAADB.addLexRes(wordFrequencies, id);
+                    connectToMAADB.addHashtags(hashtags, id);
+                    connectToMAADB.addEmoticon(emoticons, id);
+                    connectToMAADB.addEmojis(emojis, id);
+                    System.out.println("Salvataggio nel DB riuscito");
+                    System.out.println();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
     }
 
     private static void test(){
@@ -272,7 +356,6 @@ public class Main {
         tweets.add(new CompleteTweet("USERNAME rawr *kisses you and grabs your butt* mine ! ! ! >_< ", 8));
         tweets.add(new CompleteTweet("I am very \\ \" fool \" , I don't like do things and I love not to have had the truth ! $ / / ( pork ) hidden / really my intention", 9));
 
-        tweets.forEach(t-> System.out.println(t.getLemmaList()));
 
 
 

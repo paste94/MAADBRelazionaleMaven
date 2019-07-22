@@ -49,4 +49,8 @@ public enum SentimentEnum {
 		map.put(TRUST.tableId, TRUST.fileName);
 		return map;
 	}
+
+	public static String idToString(int id){
+		return getMap().get(id);
+	}
 }

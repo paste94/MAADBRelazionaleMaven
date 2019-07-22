@@ -145,6 +145,11 @@ class ConnectToRelational implements ConnectToDB{
     }
 
     @Override
+    public void mapReduce() {
+        System.out.println("ERRORE: Non è possibile eseguire mapreduce su un DB relazionale!");
+    }
+
+    @Override
     public void addEmojis(List<String> emojis, Integer sentiment) {
         try {
             Map<String, Long> freq = emojis.stream()

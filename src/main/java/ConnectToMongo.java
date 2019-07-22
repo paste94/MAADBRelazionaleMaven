@@ -1,65 +1,112 @@
 import com.kennycason.kumo.WordFrequency;
-import com.mongodb.BasicDBObject;
-import com.mongodb.CursorType;
+import com.mongodb.*;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.client.*;
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.MapReduceAction;
+import com.mongodb.client.model.UpdateOptions;
 import org.bson.Document;
 import org.apache.commons.collections4.map.MultiKeyMap;
 import org.bson.conversions.Bson;
 import utils.LexicalResource;
 import utils.SentimentEnum;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import javax.print.Doc;
+import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
-public class ConnectToMongo implements ConnectToDB{
-    private MongoClient mongoClient = MongoClients.create();
-    private MongoDatabase database = mongoClient.getDatabase("ProgettoMAADB");
+import static com.mongodb.client.model.Filters.*;
 
-    public static final String mapFunction = "function() {  " +
-                                                 "emit({ " +
-                                                     "'sentiment': this.sentiment , " +
-                                                     "'word': this.word " +
-                                                 "}, 1); " +
-                                             "}";
+public class ConnectToMongo implements ConnectToDB{
+    String shards = "mongodb://localhost:27000";
+
+
+
+    private Block<Document> printBlock = new Block<Document>() {
+        @Override
+        public void apply(final Document document) {
+            System.out.println(document.toJson());
+        }
+    };
 
     /*
-    {   sentiment: "Anger"
-        id: 1
-        lexreslist: [
-            {   lemma: "abandoned"
-                resources: { mEmoSN: 1, SentiSense: 1, NRC: 1 }
-            },
-            {   lemma: .. },
-            ...
-        ]
-    }
+    {   lemma: "frowing",
+        sentiment: {
+            sentimentName: "Anger",
+            sentimentID: 1
+        },
+        EmoSN: 0,
+        NRC: 1,
+        sentisense: 0
+    },...
      */
     @Override
     public void saveLexicalResource(List<LexicalResource> words) {
+        MongoClient mongoClient = MongoClients.create(shards);
+        MongoDatabase database = mongoClient.getDatabase("ProgettoMAADB");
         MongoCollection collection = database.getCollection("lexicalresource");
+
         Map<Integer, String> sentMap = SentimentEnum.getMap();
-        sentMap.forEach((num, sent)->{
+
+        sentMap.forEach((num, sent)-> {
+            List<Document> documents = new ArrayList<>();
             List<LexicalResource> lexRes = words.stream().filter(e-> e.getSentimentIdFk().equals(num)).collect(Collectors.toList());
-            Document document = new Document("sentiment", sent).append("id", num);
-            List<Document> wordsList = new ArrayList<>();
+
             lexRes.forEach(w->{
-                wordsList.add(new Document("lemma", w.getWord())
-                                   .append("resources",
-                                           new Document("EmoSN", w.getEmosnFreq())
-                                                .append("NRC", w.getNrcFreq())
-                                                .append("sentisense", w.getSentisenseFreq())));
+                documents.add(new Document("lemma", w.getWord())
+                        .append("sentiment", new Document("sentName", sent).append("sentID", num))
+                        .append("EmoSN", w.getEmosnFreq())
+                        .append("NRC", w.getNrcFreq())
+                        .append("sentisense", w.getSentisenseFreq())
+                        .append("type", "word"));
             });
-            document.append("lexResList", wordsList);
-            collection.insertOne(document);
+            collection.insertMany(documents);
         });
+
+        /*
+        sentMap.forEach((num, sent)-> {
+            List<Document> documents = new ArrayList<>();
+            List<LexicalResource> lexRes = words.stream().filter(e-> e.getSentimentIdFk().equals(num)).collect(Collectors.toList());
+
+            lexRes.forEach(w->{
+                documents.add(new Document("lemma", w.getWord())
+                                    .append("sentiment", new Document("sentName", sent).append("sentID", num))
+                                    .append("EmoSN", w.getEmosnFreq())
+                                    .append("NRC", w.getNrcFreq())
+                                    .append("sentisense", w.getSentisenseFreq())
+                                    .append("type", "word"));
+            });
+            collection.insertMany(documents);
+        });
+
+         */
+        mongoClient.close();
+    }
+
+    public void mapReduceTweet(List<String> tweets){
+
     }
 
     @Override
     public void addLexRes(List<WordFrequency> listOfWords, int sentiment) {
+        MongoClient mongoClient = MongoClients.create(shards);
+        MongoDatabase database = mongoClient.getDatabase("ProgettoMAADB");
+        MongoCollection collection = database.getCollection("lexicalresource");
+        String sentimentName = SentimentEnum.idToString(sentiment);
 
+        listOfWords.forEach(w->{
+
+            //{lemma:"prison", "sentiment.sentID": 1}
+            Document find = new Document("lemma", w.getWord()).append("sentiment.sentID", sentiment).append("sentiment.sentimentName", sentimentName);
+
+            //{$set:{frequence: 4}}
+            Document update = new Document("$set", new Document("type", "word"));
+
+            collection.updateOne(find, update, new UpdateOptions().upsert(true));
+        });
+
+        mongoClient.close();
     }
 
     public void addLexRes(int threshold, boolean hashtag) {
@@ -68,9 +115,12 @@ public class ConnectToMongo implements ConnectToDB{
 
     @Override
     public void deleteTable(String tableName) {
+        MongoClient mongoClient = MongoClients.create(shards);
+        MongoDatabase database = mongoClient.getDatabase("ProgettoMAADB");
         MongoCollection collection = database.getCollection(tableName);
-        collection.drop();
+        collection.deleteMany(new BasicDBObject());
         System.out.println("DROPPED");
+        mongoClient.close();
     }
 
     @Override
@@ -78,19 +128,98 @@ public class ConnectToMongo implements ConnectToDB{
 
     }
 
+
+    public void mapReduce(){
+
+        final String mapFunction =  "function(){" +
+                                    "    emit(this.sentiment.sentimentID, {'lemma': this.lemma, 'frequence':this.frequence});" +
+                                    "}";
+
+        final String reduceFunction =   "function(k,val){" +
+                                        "  ret = [];" +
+                                        "  val.forEach(v=>{" +
+                                        "    ret.push(val);" +
+                                        "  });" +
+                                        "  return {'words':val};" +
+                                        "}";
+
+
+
+        MongoClient mongoClient = MongoClients.create(shards);
+        MongoDatabase database = mongoClient.getDatabase("ProgettoMAADB");
+        MongoCollection collection = database.getCollection("lexicalresource");
+        System.out.println(1);
+
+        MapReduceIterable iterable = collection.mapReduce(mapFunction, reduceFunction).collectionName("reduced").action(MapReduceAction.REPLACE);
+        iterable.toCollection();
+        System.out.println(2);
+        mongoClient.close();
+    }
+
+    /*
+        {
+            emoji: ":)"
+            sentiment: {..}
+            frequence: 2
+        }
+     */
     @Override
-    public void addEmojis(List<String> emojis, Integer id) {
+    public void addEmojis(List<String> emojis, Integer sentiment) {
+        MongoClient mongoClient = MongoClients.create(shards);
+        MongoDatabase database = mongoClient.getDatabase("ProgettoMAADB");
+        Map<String, Long> freq = emojis.stream()
+                .collect(Collectors.groupingBy(p -> p, Collectors.counting()));
+        String sentimentName = SentimentEnum.idToString(sentiment);
+        MongoCollection collection = database.getCollection("lexicalresource");
+
+        freq.forEach((w,f)->{
+            Document find = new Document("lemma", w).append("sentiment.sentimentName", sentimentName).append("sentiment.sentimentID", sentiment);
+
+            Document update = new Document("$set", new Document("type", "emoji"));
+
+            collection.updateOne(find, update, new UpdateOptions().upsert(true));
+        });
+        mongoClient.close();
+    }
+
+    @Override
+    public void addEmoticon(List<String> emoticons, Integer sentiment) {
+        MongoClient mongoClient = MongoClients.create(shards);
+        MongoDatabase database = mongoClient.getDatabase("ProgettoMAADB");
+        Map<String, Long> freq = emoticons.stream()
+                .collect(Collectors.groupingBy(p -> p, Collectors.counting()));
+        String sentimentName = SentimentEnum.idToString(sentiment);
+        MongoCollection collection = database.getCollection("lexicalresource");
+
+
+        freq.forEach((w,f)->{
+            Document find = new Document("lemma", w).append("sentiment.sentimentName", sentimentName).append("sentiment.sentimentID", sentiment);
+
+            Document update = new Document("$set", new Document("type", "emoticon"));
+
+            collection.updateOne(find, update, new UpdateOptions().upsert(true));
+        });
+        mongoClient.close();
 
     }
 
     @Override
-    public void addEmoticon(List<String> emoticons, Integer id) {
+    public void addHashtags(List<String> hashtags, Integer sentiment) {
+        MongoClient mongoClient = MongoClients.create(shards);
+        MongoDatabase database = mongoClient.getDatabase("ProgettoMAADB");
+        Map<String, Long> freq = hashtags.stream()
+                .collect(Collectors.groupingBy(p -> p, Collectors.counting()));
+        String sentimentName = SentimentEnum.idToString(sentiment);
+        MongoCollection collection = database.getCollection("lexicalresource");
 
-    }
+        freq.forEach((w,f)->{
+            Document find = new Document("lemma", w).append("sentiment.sentimentName", sentimentName).append("sentiment.sentimentID", sentiment);
 
-    @Override
-    public void addHashtags(List<String> hashtags, Integer id) {
+            Document update = new Document("$set", new Document("type", "hashtag"));
 
+            collection.updateOne(find, update, new UpdateOptions().upsert(true));
+        });
+        mongoClient.close();
     }
 
     @Override

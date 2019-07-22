@@ -14,4 +14,5 @@ public interface ConnectToDB {
     void addEmoticon(List<String> emoticons, Integer id);
     void addHashtags(List<String> hashtags, Integer id);
     void printCloud(int id, String cloudType);
+    void mapReduce();
 }
