@@ -6,6 +6,7 @@ import com.kennycason.kumo.font.scale.LinearFontScalar;
 import com.kennycason.kumo.nlp.FrequencyAnalyzer;
 import com.kennycason.kumo.palette.ColorPalette;
 import utils.LexicalResource;
+import utils.SentimentEnum;
 
 import java.awt.*;
 import java.sql.*;
@@ -114,7 +115,7 @@ class ConnectToRelational implements ConnectToDB{
     public void printCloud(int sentiment, String tableName){
         //Genera l'immagine
         try {
-            String fileName = tableName + "_" + sentiment;
+            String fileName = tableName + "_" + SentimentEnum.idToString(sentiment) + ".png";
             Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/MAADB", "postgres", "postgres");
             Statement statement = connection.createStatement();
             ResultSet rs = statement.executeQuery("SELECT word, frequence FROM " + tableName + " WHERE sentiment = " + sentiment);
@@ -134,7 +135,7 @@ class ConnectToRelational implements ConnectToDB{
             wordCloud.setColorPalette(new ColorPalette(new Color(0x4055F1), new Color(0x408DF1), new Color(0x40AAF1), new Color(0x40C5F1), new Color(0x40D3F1), new Color(0xFFFFFF)));
             wordCloud.build(wordFrequencies);
             wordCloud.writeToFile("./src/main/resources/word_clouds/" + fileName);
-            System.out.println("Generato file " + fileName + ".png");
+            System.out.println("Generato file " + fileName);
 
             connection.close();
 

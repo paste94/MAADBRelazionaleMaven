@@ -132,15 +132,11 @@ public class ConnectToMongo implements ConnectToDB{
     public void mapReduce(){
 
         final String mapFunction =  "function(){" +
-                                    "    emit(this.sentiment.sentimentID, {'lemma': this.lemma, 'frequence':this.frequence});" +
+                                    "    emit(this.lemma, {'sentiment':this.sentiment.sentimentID, 'frequence':this.frequence});" +
                                     "}";
 
         final String reduceFunction =   "function(k,val){" +
-                                        "  ret = [];" +
-                                        "  val.forEach(v=>{" +
-                                        "    ret.push(val);" +
-                                        "  });" +
-                                        "  return {'words':val};" +
+                                        "  return {'sentFreq':val};" +
                                         "}";
 
 
@@ -149,10 +145,25 @@ public class ConnectToMongo implements ConnectToDB{
         MongoDatabase database = mongoClient.getDatabase("ProgettoMAADB");
         MongoCollection collection = database.getCollection("lexicalresource");
         System.out.println(1);
-
         MapReduceIterable iterable = collection.mapReduce(mapFunction, reduceFunction).collectionName("reduced").action(MapReduceAction.REPLACE);
         iterable.toCollection();
         System.out.println(2);
+        mongoClient.close();
+    }
+
+    public void printWordCloudMongo(int numberOfWords){
+        MongoClient mongoClient = MongoClients.create(shards);
+        MongoDatabase database = mongoClient.getDatabase("ProgettoMAADB");
+        MongoCollection collection = database.getCollection("reduced");
+
+        FindIterable found = collection.find();
+
+        List<WordFrequency> wordFrequencies = new ArrayList<>();
+
+        while (found.iterator().hasNext()){
+            Document d = (Document) found.iterator().next();
+        }
+
         mongoClient.close();
     }
 
