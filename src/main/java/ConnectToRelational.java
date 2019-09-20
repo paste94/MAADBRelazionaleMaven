@@ -5,24 +5,22 @@ import com.kennycason.kumo.bg.CircleBackground;
 import com.kennycason.kumo.font.scale.LinearFontScalar;
 import com.kennycason.kumo.nlp.FrequencyAnalyzer;
 import com.kennycason.kumo.palette.ColorPalette;
-import utils.LexicalResource;
-import utils.SentimentEnum;
 
 import java.awt.*;
 import java.sql.*;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-class ConnectToRelational implements ConnectToDB{
+class ConnectToRelational{
 
     private final String url = "jdbc:postgresql://localhost:5432/MAADB";
     private final String user = "postgres";
     private final String password = "postgres";
 
-    @Override
-    public void saveLexicalResource(List<LexicalResource> words) {
+    void saveLexicalResource(List<LexicalResource> words) {
         try {
             String query = "INSERT INTO LEXICALRESOURCE(WORD,SENTIMENT_FK,EMOSN,NRC,SENTISENSE) VALUES (?,?,?,?,?)";
             Connection connection = DriverManager.getConnection(url, user, password);
@@ -45,8 +43,7 @@ class ConnectToRelational implements ConnectToDB{
         }
     }
 
-    @Override
-    public void addLexRes(List<WordFrequency> listOfWords, int sentiment) {
+    void addLexRes(Map<String, Integer> listOfWords, int sentiment) {
         try {
             String query =  "INSERT INTO lexicalresource (word, sentiment_fk, frequence) " +
                             "VALUES (?, ?, ?) " +
@@ -56,7 +53,7 @@ class ConnectToRelational implements ConnectToDB{
             Connection connection = DriverManager.getConnection(url, user, password);
             PreparedStatement statement = connection.prepareStatement(query);
 
-
+/*
             for (WordFrequency elem : listOfWords) {
                 statement.setString(1, elem.getWord());
                 statement.setInt(2, sentiment);
@@ -65,6 +62,21 @@ class ConnectToRelational implements ConnectToDB{
 
                 statement.addBatch();
             }
+
+ */
+            listOfWords.forEach((word, freq) ->{
+                try {
+                    statement.setString(1, word);
+                    statement.setInt(2, sentiment);
+                    statement.setInt(3, freq);
+                    statement.setInt(4, freq);
+
+                    statement.addBatch();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+
+            });
             System.out.println(statement);
             statement.executeBatch();
             System.out.println("******************************************");
@@ -75,22 +87,23 @@ class ConnectToRelational implements ConnectToDB{
         }
     }
 
-
-    public void printWordClouds(int sentiment, String fileName){
-        //Genera l'immagine
+    void printWordClouds(int sentiment, String fileName){
+        //Genera l'immagine per le risorse lessicali
         try {
             Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/MAADB", "postgres", "postgres");
             Statement statement = connection.createStatement();
-            ResultSet rs = statement.executeQuery("SELECT word, frequence FROM lexicalresource WHERE sentiment_fk = " + sentiment);
+            ResultSet rs = statement.executeQuery("SELECT word, frequence FROM lexicalresource WHERE sentiment_fk = " + sentiment + " ORDER BY frequence desc");
 
-            final FrequencyAnalyzer frequencyAnalyzer = new FrequencyAnalyzer();
-            frequencyAnalyzer.setWordFrequenciesToReturn(500);
             List<WordFrequency> wordFrequencies = new ArrayList<>();
 
-            while(rs.next()){
+            int i = 0;
+
+            while(rs.next() && i<500){
+                i++;
                 wordFrequencies.add(new WordFrequency(rs.getString("word"), rs.getInt("frequence")));
             }
 
+            System.out.println(wordFrequencies.size());
 
             System.out.println(wordFrequencies);
             final Dimension dimension = new Dimension(600, 600);
@@ -111,9 +124,8 @@ class ConnectToRelational implements ConnectToDB{
         }
     }
 
-    @Override
-    public void printCloud(int sentiment, String tableName){
-        //Genera l'immagine
+    void printCloud(int sentiment, String tableName){
+        //Genera l'immagine per hashtag, emoji o emoticon
         try {
             String fileName = tableName + "_" + SentimentEnum.idToString(sentiment) + ".png";
             Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/MAADB", "postgres", "postgres");
@@ -145,13 +157,7 @@ class ConnectToRelational implements ConnectToDB{
         }
     }
 
-    @Override
-    public void mapReduce() {
-        System.out.println("ERRORE: Non è possibile eseguire mapreduce su un DB relazionale!");
-    }
-
-    @Override
-    public void addEmojis(List<String> emojis, Integer sentiment) {
+    void addEmojis(List<String> emojis, Integer sentiment) {
         try {
             Map<String, Long> freq = emojis.stream()
                     .collect(Collectors.groupingBy(p -> p, Collectors.counting()));
@@ -187,8 +193,7 @@ class ConnectToRelational implements ConnectToDB{
         }
     }
 
-    @Override
-    public void addEmoticon(List<String> emoticons, Integer sentiment) {
+    void addEmoticon(List<String> emoticons, Integer sentiment) {
         try {
             Map<String, Long> freq = emoticons.stream()
                     .collect(Collectors.groupingBy(p -> p, Collectors.counting()));
@@ -223,8 +228,7 @@ class ConnectToRelational implements ConnectToDB{
         }
     }
 
-    @Override
-    public void addHashtags(List<String> hashtags, Integer sentiment) {
+    void addHashtags(List<String> hashtags, Integer sentiment) {
         try {
             Map<String, Long> freq = hashtags.stream()
                     .collect(Collectors.groupingBy(p -> p, Collectors.counting()));
@@ -258,8 +262,7 @@ class ConnectToRelational implements ConnectToDB{
         }
     }
 
-    @Override
-    public void deleteTable(String tableName) {
+    void deleteTable(String tableName) {
         try {
             Connection connection = DriverManager.getConnection(url, user, password);
             Statement statement = connection.createStatement();
@@ -268,5 +271,79 @@ class ConnectToRelational implements ConnectToDB{
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
+    }
+
+    String statistics(int sentiment) {
+        try {
+            Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/MAADB", "postgres", "postgres");
+            Statement statement = connection.createStatement();
+            int emosnFreq = 0;
+            int emosnTot = 0;
+            int nrcFreq = 0;
+            int nrcTot = 0;
+            int sentisenseFreq = 0;
+            int sentisenseTot = 0;
+            int totFreq = 0;
+
+            ResultSet rs = statement.executeQuery("SELECT COUNT(*) FROM lexicalresource WHERE sentiment_fk = " + sentiment + " AND emosn > 0 AND frequence > 0");
+            rs.next();
+            emosnFreq += rs.getInt("count");
+            rs = statement.executeQuery("SELECT COUNT(*) FROM lexicalresource WHERE sentiment_fk = " + sentiment + " AND emosn > 0");
+            rs.next();
+            emosnTot += rs.getInt("count");
+
+            rs = statement.executeQuery("SELECT COUNT(*) FROM lexicalresource WHERE sentiment_fk = " + sentiment + " AND nrc > 0 AND frequence > 0");
+            rs.next();
+            nrcFreq += rs.getInt("count");
+            rs = statement.executeQuery("SELECT COUNT(*) FROM lexicalresource WHERE sentiment_fk = " + sentiment + " AND nrc > 0");
+            rs.next();
+            nrcTot += rs.getInt("count");
+
+            rs= statement.executeQuery("SELECT COUNT(*) FROM lexicalresource WHERE sentiment_fk = " + sentiment + " AND sentisense > 0 AND frequence > 0");
+            rs.next();
+            sentisenseFreq += rs.getInt("count");
+            rs = statement.executeQuery("SELECT COUNT(*) FROM lexicalresource WHERE sentiment_fk = " + sentiment + " AND sentisense > 0");
+            rs.next();
+            sentisenseTot += rs.getInt("count");
+
+            rs = statement.executeQuery("SELECT COUNT(*) FROM lexicalresource WHERE sentiment_fk = " + sentiment + " AND frequence > 0");
+            rs.next();
+            totFreq += rs.getInt("count");
+
+            String ret = "";
+
+            ret += "\nFrequenze per sentimento " + SentimentEnum.idToString(sentiment) + " \n";
+            if(emosnTot>0){
+                ret += "EmoSN: \n";
+                ret += "\tIl " + new DecimalFormat("##.##").format(((float)emosnFreq / (float)totFreq) * 100 )+ "% delle parole presenti nei tweet compare anche in EmoSN\n";
+                ret += "\t" + (emosnTot - emosnFreq) + " parole su " + emosnTot + " in EmoSN non sono mai utilizzate nei tweet (" +   new DecimalFormat("##.##").format(((float)emosnTot - (float)emosnFreq) / (float)emosnTot * 100) + "%)\n";
+            }else{
+                ret += "EmoSN: Non presente tra le risorse\n";
+            }
+            if(nrcTot>0){
+                ret += "NRC: \n";
+                ret += "\tIl " + new DecimalFormat("##.##").format(((float)nrcFreq / (float)totFreq) * 100) + "% delle parole presenti nei tweet compare anche in NRC\n";
+                ret += "\t" + (nrcTot - nrcFreq) + " parole su " + nrcTot + " parole in NRC non sono mai utilizzate nei tweet (" + new DecimalFormat("##.##").format((((float)nrcTot - (float)nrcFreq) / (float)nrcTot) * 100) + "%)\n";
+            }else{
+                ret += "NRC: Non presente tra le risorse\n";
+            }
+            if(sentisenseTot>0){
+                ret += "Sentisense: \n";
+                ret += "\tIl " + new DecimalFormat("##.##").format(((float)sentisenseFreq / (float)totFreq) * 100) + "% delle parole presenti nei tweet compare anche in Sentisense\n";
+                ret += "\t" + (sentisenseTot - sentisenseFreq) + " parole su " + sentisenseTot + " parole in Sentisense non sono mai utilizzate nei tweet (" + new DecimalFormat("##.##").format((((float)sentisenseTot - (float)sentisenseFreq) / (float)sentisenseTot) * 100) + "%)\n";
+            }else{
+                ret += "Sentisense: Non presente tra le risorse\n";
+            }
+            ret += "---------";
+
+            connection.close();
+
+            return ret;
+
+            //Aggiunge le frequenze e le parile nuove al database
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return "ERROR";
     }
 }
